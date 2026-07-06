@@ -29,17 +29,30 @@ let Hooks = {};
 
 Hooks.PlayerMovement = {
   mounted() {
-    this.box = this.el.querySelector(".w-12.h-12"); // the colored square
+    this.box = this.el.querySelector(".w-12.h-12");
     this.box.style.position = "relative";
     this.box.style.left = "0px";
+    this.box.style.bottom = "0px"; // track vertical pos via bottom
 
-    const container = this.el.closest(".absolute.bottom-16"); // the positioning parent
-
+    const container = this.el.closest(".absolute.bottom-16");
     this.keys = {};
-    window.addEventListener(
-      "keydown",
-      (e) => (this.keys[e.key.toLowerCase()] = true),
-    );
+
+    this.updatedX = 0;
+    this.updatedY = 0;
+
+    // Jump state
+    this.velocityY = 0;
+    this.isOnGround = true;
+    this.lastPushedBottom = 0; // track last pushed position
+    const GRAVITY = 0.5;
+    const JUMP_FORCE = -12; // negative = upward
+    const GROUND = 0; // resting bottom offset in px
+    const PUSH_THRESHOLD = 2;
+
+    window.addEventListener("keydown", (e) => {
+      const k = e.key.toLowerCase();
+      if (!this.keys[k]) this.keys[k] = true; // prevent key-repeat double-jumps
+    });
     window.addEventListener(
       "keyup",
       (e) => (this.keys[e.key.toLowerCase()] = false),
@@ -48,26 +61,77 @@ Hooks.PlayerMovement = {
     this.loop = setInterval(() => {
       const containerWidth = container.offsetWidth;
       const boxWidth = this.box.offsetWidth;
-      const current = parseFloat(this.box.style.left) || 0;
 
+      // --- Horizontal ---
+      const currentLeft = parseFloat(this.box.style.left) || 0;
       if (this.keys["a"]) {
         const next = Math.max(
           -(containerWidth / 2 - boxWidth / 2),
-          current - 5,
+          currentLeft - 5,
         );
         this.box.style.left = next + "px";
-        if (next !== current)
-          this.pushEvent("move", { direction: "left", new_pos: next });
+        this.updatedX = next;
+        if (next !== currentLeft)
+          this.pushEvent("move", {
+            direction: "left",
+            new_pos: [next, this.updatedY],
+          });
       }
       if (this.keys["d"]) {
-        const next = Math.min(containerWidth / 2 - boxWidth / 2, current + 5);
+        const next = Math.min(
+          containerWidth / 2 - boxWidth / 2,
+          currentLeft + 5,
+        );
         this.box.style.left = next + "px";
-        if (next !== current)
-          this.pushEvent("move", { direction: "right", new_pos: next });
+        this.updatedX = next;
+        if (next !== currentLeft)
+          this.pushEvent("move", {
+            direction: "right",
+            new_pos: [next, this.updatedY],
+          });
+      }
+
+      // --- Jump initiation ---
+      if (this.keys[" "] && this.isOnGround) {
+        this.velocityY = JUMP_FORCE;
+        this.isOnGround = false;
+        // this.pushEvent("jump", {});
+      }
+
+      // --- Vertical physics ---
+      if (!this.isOnGround) {
+        this.velocityY += GRAVITY;
+        const currentBottom = parseFloat(this.box.style.bottom) || 0;
+        const nextBottom = currentBottom - this.velocityY;
+
+        if (nextBottom <= GROUND) {
+          // Landed
+          this.box.style.bottom = GROUND + "px";
+          this.velocityY = 0;
+          this.isOnGround = true;
+          this.lastPushedBottom = 0;
+          this.updatedY = 0;
+          // send event
+          this.pushEvent("move", {
+            direction: "vertical",
+            new_pos: [this.updatedX, 0],
+          });
+        } else {
+          this.box.style.bottom = nextBottom + "px";
+          this.updatedY = nextBottom;
+
+          if (Math.abs(nextBottom - this.lastPushedBottom) >= PUSH_THRESHOLD) {
+            this.lastPushedBottom = nextBottom;
+            // send event
+            this.pushEvent("move", {
+              direction: "vertical",
+              new_pos: [this.updatedX, nextBottom],
+            });
+          }
+        }
       }
     }, 16);
   },
-
   destroyed() {
     clearInterval(this.loop);
   },

@@ -17,8 +17,8 @@ defmodule MoleViewWeb.Router do
   scope "/", MoleViewWeb do
     pipe_through :browser
 
-    get "/", PageController, :home
-    live("/main", MainLive)
+    # get "/", PageController, :home
+    live("/", MainLive)
   end
 
   # Other scopes may use custom stacks.

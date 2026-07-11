@@ -15,7 +15,8 @@ defmodule MoleView.Application do
       # Start a worker by calling: MoleView.Worker.start_link(arg)
       # {MoleView.Worker, arg},
       # Start to serve requests, typically the last entry
-      MoleViewWeb.Endpoint
+      MoleViewWeb.Endpoint,
+      MoleView.GameState
     ]
 
     # See https://elixir.hexdocs.pm/Supervisor.html

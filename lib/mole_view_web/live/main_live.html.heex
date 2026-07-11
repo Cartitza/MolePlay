@@ -1,9 +1,17 @@
 <div class="relative flex items-end h-screen w-full">
   <!-- Ground -->
   <div class="absolute bottom-0 w-full h-16 bg-green-700 rounded-t-lg"></div>
-
+  <%!-- Remote players --%>
+  <div class="absolute bottom-16 w-full">
+    <%= for remote_player <- @remote_players do %>
+      <.remote_player_box player={remote_player} />
+    <% end %>
+  </div>
   <!-- Player standing ON the ground -->
   <div class="absolute bottom-16 w-full flex justify-center">
-    <.player_box player_colour={@local_player.colour} />
+    <.player_box
+      player_colour={@local_player.colour}
+      player_posX={@local_player.posX}
+    />
   </div>
 </div>

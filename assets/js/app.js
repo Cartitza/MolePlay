@@ -31,13 +31,13 @@ Hooks.PlayerMovement = {
   mounted() {
     this.box = this.el.querySelector(".w-12.h-12");
     this.box.style.position = "relative";
-    this.box.style.left = "0px";
-    this.box.style.bottom = "0px"; // track vertical pos via bottom
+    // this.box.style.left = "0px";
+    // this.box.style.bottom = "0px"; // track vertical pos via bottom
 
     const container = this.el.closest(".absolute.bottom-16");
     this.keys = {};
 
-    this.updatedX = 0;
+    this.updatedX = parseFloat(this.box.style.left);
     this.updatedY = 0;
 
     // Jump state

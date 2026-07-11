@@ -10,7 +10,7 @@ defmodule MoleViewWeb.GameComponents do
       id="local_player"
       phx-hook="PlayerMovement"
       class="absolute bottom-0"
-      style={"left: calc(50% + #{@player_posX}px)"}
+      data-pos-x={@player_posX}
     >
       <div
         class="w-12 h-12 rounded-md border-2 border-black-800 shadow-lg"

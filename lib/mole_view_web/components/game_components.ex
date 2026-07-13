@@ -26,6 +26,8 @@ defmodule MoleViewWeb.GameComponents do
   def remote_player_box(assigns) do
     ~H"""
     <div
+      id={"remote_player_#{@player.id}"}
+      phx-hook="RemotePlayer"
       class="absolute bottom-0"
       style={"left: calc(50% + #{@player.posX}px)"}
     >

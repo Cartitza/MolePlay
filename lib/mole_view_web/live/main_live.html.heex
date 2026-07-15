@@ -1,17 +1,65 @@
-<div class="relative flex items-end h-screen w-full">
-  <!-- Ground -->
-  <div class="absolute bottom-0 w-full h-16 bg-green-700 rounded-t-lg"></div>
-  <%!-- Remote players --%>
-  <div class="absolute bottom-16 w-full">
-    <%= for remote_player <- @remote_players do %>
-      <.remote_player_box player={remote_player} />
-    <% end %>
+<%= if !@is_ready do %>
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/80 backdrop-blur-sm">
+    <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-sm flex flex-col gap-6">
+      <div class="flex flex-col gap-1">
+        <h1 class="text-2xl font-bold text-gray-900">Join the game</h1>
+        <p class="text-sm text-gray-500">Pick a colour and enter your name</p>
+      </div>
+
+      <form phx-submit="join_game" class="flex flex-col gap-6">
+        <div class="flex flex-col gap-1.5">
+          <label class="text-sm font-medium text-gray-700" for="player-name">Your name</label>
+          <input
+            id="player-name"
+            type="text"
+            name="player_name"
+            placeholder="e.g. Mole"
+            maxlength="20"
+            class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <span class="text-sm font-medium text-gray-700">Colour</span>
+          <div class="flex gap-3">
+            <%= for colour <- ["#EF4444", "#3B82F6", "#22C55E", "#F59E0B", "#A855F7"] do %>
+              <label
+                class="w-10 h-10 rounded-full border-4 cursor-pointer transition-transform hover:scale-110 has-[:checked]:border-gray-900 has-[:checked]:scale-110 border-transparent"
+                style={"background-color: #{colour};"}
+              >
+                <input type="radio" name="player_colour" value={colour} class="sr-only" />
+              </label>
+            <% end %>
+          </div>
+        </div>
+
+        <button
+          type="submit"
+          class="w-full py-2.5 rounded-lg bg-indigo-600 text-white font-semibold text-sm hover:bg-indigo-700 active:scale-95 transition"
+        >
+          Join
+        </button>
+      </form>
+    </div>
   </div>
-  <!-- Player standing ON the ground -->
-  <div class="absolute bottom-16 w-full flex justify-center">
-    <.player_box
-      player_colour={@local_player.colour}
-      player_posX={@local_player.posX}
-    />
+<% else %>
+  <!-- Normal screen -->
+  <div class="relative flex items-end h-screen w-full">
+    <!-- Ground -->
+    <div class="absolute bottom-0 w-full h-16 bg-green-700 rounded-t-lg"></div>
+    <%!-- Remote players --%>
+    <div class="absolute bottom-16 w-full">
+      <%= for remote_player <- @remote_players do %>
+        <.remote_player_box player={remote_player} />
+      <% end %>
+    </div>
+    <!-- Player standing ON the ground -->
+    <div class="absolute bottom-16 w-full flex justify-center">
+      <.player_box
+        player_colour={@local_player.colour}
+        player_posX={@local_player.posX}
+        player_name={@local_player.name}
+      />
+    </div>
   </div>
-</div>
+<% end %>

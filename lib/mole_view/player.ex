@@ -8,7 +8,7 @@ defmodule MoleView.Player do
           id: pos_integer()
         }
 
-  defstruct name: nil,
+  defstruct name: "Pablo",
             hp: 100,
             colour: "red",
             posX: 0,

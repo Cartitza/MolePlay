@@ -11,12 +11,27 @@ defmodule MoleViewWeb.MainLive do
     # Subscribe to PubSub
     Phoenix.PubSub.subscribe(MoleView.PubSub, "game_room")
 
-    player = %Player{colour: "cyan", posX: Enum.random(-400..400), id: Enum.random(1..99999)}
+    # player = %Player{colour: "cyan", posX: Enum.random(-400..400), id: Enum.random(1..99999)}
 
     new_socket =
       socket
-      |> assign(:local_player, player)
+      |> assign(:is_ready, false)
+      |> assign(:local_player, nil)
       |> assign(:remote_players, [])
+
+    # TODO: Player list
+    {:ok, new_socket}
+  end
+
+  @impl true
+  def handle_event("join_game", %{"player_name" => name, "player_colour" => colour}, socket) do
+    # Build the local player and mark as ready
+    player = %Player{
+      name: name,
+      colour: colour,
+      posX: Enum.random(-400..400),
+      id: Enum.random(1..99999)
+    }
 
     # broadcast 'new_player'
     if connected?(socket) do
@@ -24,7 +39,12 @@ defmodule MoleViewWeb.MainLive do
       Phoenix.PubSub.broadcast(MoleView.PubSub, "game_room", {:new_player, player})
     end
 
-    {:ok, new_socket}
+    new_socket =
+      socket
+      |> assign(:is_ready, true)
+      |> assign(:local_player, player)
+
+    {:noreply, new_socket}
   end
 
   @impl true
@@ -35,12 +55,6 @@ defmodule MoleViewWeb.MainLive do
       "game_room",
       {:position_update, socket.assigns.local_player.id, new_x, new_y}
     )
-
-    # update the local player assignment
-    # new_player =
-    #   socket.assigns.local_player
-    #   |> Map.put(:posX, new_x)
-    #   |> Map.put(:posY, new_y)
 
     {:noreply, socket}
   end

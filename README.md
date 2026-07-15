@@ -1,4 +1,4 @@
-# MoleView
+# MolePlay
 
 To start your Phoenix server:
 

@@ -46,4 +46,34 @@ defmodule MoleViewWeb.GameComponents do
     </div>
     """
   end
+
+  attr :players, :list, required: true
+
+  def leaderboard(assigns) do
+    ~H"""
+    <div class="absolute top-4 left-0 right-0 flex justify-center px-4 z-10">
+      <div class="flex gap-3 flex-wrap justify-center">
+        <%= for player <- @players do %>
+          <div class="flex flex-col gap-1 bg-black/40 backdrop-blur-sm rounded-lg px-3 py-2 min-w-[80px]">
+            <div class="flex items-center gap-1.5">
+              <div
+                class="w-3 h-3 rounded-sm flex-shrink-0"
+                style={"background-color: #{player.colour};"}
+              />
+              <span class="text-xs font-semibold text-white truncate max-w-[80px]">
+                {player.name}
+              </span>
+            </div>
+            <div class="w-full h-1.5 bg-white/20 rounded-full overflow-hidden">
+              <div
+                class="h-full bg-green-400 rounded-full transition-all duration-300"
+                style={"width: #{player.hp}%;"}
+              />
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+    """
+  end
 end

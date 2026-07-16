@@ -60,7 +60,8 @@ defmodule MoleViewWeb.MainLive do
   end
 
   @impl true
-  def handle_info({:new_player, player}, socket) do
+  def handle_info({:new_player, player}, socket) when socket.assigns.is_ready do
+    # should add "is_ready" checks for less errors
     local_id = socket.assigns.local_player.id
     # update the genserver
     if player.id != local_id do
@@ -74,12 +75,20 @@ defmodule MoleViewWeb.MainLive do
     {:noreply, assign(socket, :remote_players, remote_player_list)}
   end
 
+  def handle_info({:new_player, _player}, socket) do
+    {:noreply, socket}
+  end
+
   @impl true
-  def handle_info({:position_update, id, new_x, new_y}, socket) do
+  def handle_info({:position_update, id, new_x, new_y}, socket) when socket.assigns.is_ready do
     # in handle_info de la broadcast:
     # 1. update la genserver cu pozitia per id
     GameState.update_player_position(id, new_x, new_y)
     # 2. nu intorc socket, ci event pt hookul de remote_player
     {:noreply, push_event(socket, "player_moved", %{id: id, x: new_x, y: new_y})}
+  end
+
+  def handle_info({:position_update, _id, _new_x, _new_y}, socket) do
+    {:noreply, socket}
   end
 end

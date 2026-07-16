@@ -45,6 +45,8 @@
 <% else %>
   <!-- Normal screen -->
   <div class="relative flex items-end h-screen w-full">
+    <!-- Leaderboard -->
+    <.leaderboard players={[@local_player | @remote_players]} />
     <!-- Ground -->
     <div class="absolute bottom-0 w-full h-16 bg-green-700 rounded-t-lg"></div>
     <%!-- Remote players --%>

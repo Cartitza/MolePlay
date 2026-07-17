@@ -59,7 +59,7 @@
     <% end %>
 
     <%!-- Remote players --%>
-    <div id="remote-players-container" class="absolute bottom-16 w-full">
+    <div id="remote-players-container" class="absolute bottom-16 w-full" phx-update="append">
       <%= for remote_player <- @remote_players do %>
         <.remote_player_box player={remote_player} />
       <% end %>

@@ -19,9 +19,28 @@ defmodule MoleView.GameState do
     GenServer.call(__MODULE__, {:update_player_position, id, posX, posY})
   end
 
+  def update_weapon(id) do
+    GenServer.call(__MODULE__, {:update_weapon, id})
+  end
+
   # --- HANDLERS ---
   def init(init_gamestate) do
     {:ok, init_gamestate}
+  end
+
+  def handle_call({:update_weapon, id}, _from, state) do
+    new_player_list =
+      Enum.map(state.player_list, fn p ->
+        if p.id == id do
+          Map.put(p, :has_weapon, true)
+        else
+          p
+        end
+      end)
+
+    new_state = Map.put(state, :player_list, new_player_list)
+
+    {:reply, new_player_list, new_state}
   end
 
   def handle_call({:add_new_player, player}, _from, state) do

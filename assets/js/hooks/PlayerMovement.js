@@ -32,6 +32,25 @@ const PlayerMovement = {
     window.addEventListener("keydown", this._onKeyDown);
     window.addEventListener("keyup", this._onKeyUp);
 
+    // weapon setup (according to events sent)
+    this.weaponActive = false;
+    this.weaponX = null;
+
+    this.handleEvent("weapon_spawned", ({ x }) => {
+      this.weaponActive = true;
+      this.weaponX = x;
+    });
+
+    this.handleEvent("weapon_despawned", () => {
+      this.weaponActive = false;
+      this.weaponX = null;
+    });
+
+    // show that I have the weapon
+    this.handleEvent("local_player_has_weapon", () => {
+      this.box.style.outline = "3px solid gold";
+    });
+
     this.loop = setInterval(() => {
       const containerWidth = container.offsetWidth;
       const boxWidth = this.box.offsetWidth;
@@ -78,6 +97,19 @@ const PlayerMovement = {
             this.lastPushedBottom = nextBottom;
             this.pushEvent("move", { direction: "vertical", new_pos: [this.updatedX, nextBottom] });
           }
+        }
+      }
+
+      // --- Touch Weapon ---
+      if (this.weaponActive && this.weaponX != null) {
+        const dx = Math.abs(this.updatedX - this.weaponX);
+        const dy = Math.abs(this.updatedY - 156);
+        const WEAPON_SIZE = 24;
+        const PLAYER_SIZE = 48;
+
+        if (dx < (PLAYER_SIZE + WEAPON_SIZE) / 2 && dy < (PLAYER_SIZE + WEAPON_SIZE) / 2) {
+          this.weaponActive = false; // prevent repeated firing
+          this.pushEvent("pick_up_weapon", {});
         }
       }
     }, 16);

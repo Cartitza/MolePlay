@@ -14,7 +14,7 @@ defmodule MoleViewWeb.MainLive do
     # TODO: Add weapon
     # - field la playeri, la fiecare 5s cu send_after
     # - trimis ca event cand un player intra in el (nush daca ca hook nou la arma sau PlayerMovement.js)
-    # - hooks render if it has weapon through dataset value
+    # - hooks render if it has weapon through push event directly in
 
     new_socket =
       socket
@@ -69,6 +69,39 @@ defmodule MoleViewWeb.MainLive do
   end
 
   @impl true
+  def handle_event("pick_up_weapon", _payload, socket) do
+    GameState.update_weapon(socket.assigns.local_player.id)
+
+    # make weapons disappear for all players
+    Phoenix.PubSub.broadcast(
+      MoleView.PubSub,
+      "game_room",
+      :dont_render_weapon
+    )
+
+    # broadcast to update client side on who has weapon
+    Phoenix.PubSub.broadcast(
+      MoleView.PubSub,
+      "game_room",
+      {:show_player_weapon, socket.assigns.local_player.id}
+    )
+
+    {:noreply, socket}
+  end
+
+  #
+  @impl true
+  def handle_info({:show_player_weapon, id}, socket) do
+    local_id = socket.assigns.local_player.id
+
+    if id == local_id do
+      {:noreply, push_event(socket, "local_player_has_weapon", %{})}
+    else
+      {:noreply, push_event(socket, "remote_player_has_weapon", %{id: id})}
+    end
+  end
+
+  @impl true
   def handle_info(:show_weapon, socket) do
     # make weapon appear at every player
     weapon_x = Enum.random(-400..400)
@@ -106,13 +139,19 @@ defmodule MoleViewWeb.MainLive do
       socket
       |> assign(:weapon_x, weapon_x)
       |> assign(:display_weapon, true)
+      |> push_event("weapon_spawned", %{x: weapon_x})
 
     {:noreply, new_socket}
   end
 
   @impl true
   def handle_info(:dont_render_weapon, socket) do
-    {:noreply, assign(socket, :display_weapon, false)}
+    new_socket =
+      socket
+      |> assign(:display_weapon, false)
+      |> push_event("weapon_despawned", %{})
+
+    {:noreply, new_socket}
   end
 
   @impl true
@@ -128,7 +167,20 @@ defmodule MoleViewWeb.MainLive do
       GameState.get_player_list()
       |> Enum.reject(fn p -> p.id == local_id end)
 
-    {:noreply, assign(socket, :remote_players, remote_player_list)}
+    # resolve weapon handlers here
+    weapon_holders = Enum.filter(GameState.get_player_list(), fn p -> p.has_weapon end)
+
+    new_socket =
+      Enum.reduce(weapon_holders, assign(socket, :remote_players, remote_player_list), fn holder,
+                                                                                          s ->
+        if holder.id == local_id do
+          push_event(s, "local_player_has_weapon", %{})
+        else
+          push_event(s, "remote_player_has_weapon", %{id: holder.id})
+        end
+      end)
+
+    {:noreply, new_socket}
   end
 
   def handle_info({:new_player, _player}, socket) do

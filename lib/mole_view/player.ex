@@ -5,7 +5,8 @@ defmodule MoleView.Player do
           colour: String.t(),
           posX: float(),
           posY: float(),
-          id: pos_integer()
+          id: pos_integer(),
+          has_weapon: boolean()
         }
 
   defstruct name: "Pablo",
@@ -13,5 +14,6 @@ defmodule MoleView.Player do
             colour: "red",
             posX: 0,
             posY: 0,
-            id: 1
+            id: 1,
+            has_weapon: false
 end

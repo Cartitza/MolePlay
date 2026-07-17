@@ -49,14 +49,27 @@
     <.leaderboard players={[@local_player | @remote_players]} />
     <!-- Ground -->
     <div class="absolute bottom-0 w-full h-16 bg-green-700 rounded-t-lg"></div>
+    <%!-- Weapon --%>
+    <%= if @display_weapon do %>
+      <div
+        class="absolute w-6 h-6 rounded-md border-2 border-white shadow-lg"
+        style={"background-color: black; left: calc(50% + #{@weapon_x}px); bottom: 200px;"}
+      >
+      </div>
+    <% end %>
+
     <%!-- Remote players --%>
-    <div class="absolute bottom-16 w-full">
+    <div id="remote-players-container" class="absolute bottom-16 w-full">
       <%= for remote_player <- @remote_players do %>
         <.remote_player_box player={remote_player} />
       <% end %>
     </div>
     <!-- Player standing ON the ground -->
-    <div class="absolute bottom-16 w-full flex justify-center">
+    <div
+      id="local-player-container"
+      class="absolute bottom-16 w-full flex justify-center"
+      phx-update="ignore"
+    >
       <.player_box
         player_colour={@local_player.colour}
         player_posX={@local_player.posX}

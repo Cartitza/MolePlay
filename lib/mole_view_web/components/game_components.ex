@@ -4,6 +4,7 @@ defmodule MoleViewWeb.GameComponents do
   attr :player_colour, :string, required: true
   attr :player_posX, :float, required: true
   attr :player_name, :string, required: true
+  attr :player_id, :integer, required: true
 
   def player_box(assigns) do
     ~H"""
@@ -12,6 +13,7 @@ defmodule MoleViewWeb.GameComponents do
       phx-hook="PlayerMovement"
       class="absolute bottom-0"
       data-pos-x={@player_posX}
+      data-player-id={@player_id}
     >
       <span class="mb-1 text-xs font-semibold text-white drop-shadow-md whitespace-nowrap">
         {@player_name}

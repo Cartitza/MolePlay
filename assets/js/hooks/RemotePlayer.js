@@ -18,6 +18,15 @@ const RemotePlayer = {
         if (box) box.style.outline = "3px solid gold";
       }
     });
+
+    // showcase which player used the weapon
+    this.handleEvent("remote_player_doesnt_have_weapon", ({ id }) => {
+      const el = document.getElementById(`remote_player_${id}`);
+      if (el) {
+        const box = el.querySelector(".w-12.h-12");
+        if (box) box.style.outline = "";
+      }
+    });
   }
 };
 

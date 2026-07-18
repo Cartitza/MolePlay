@@ -8,6 +8,16 @@ const PlayerMovement = {
 
     this.keys = {};
 
+    // build the list of remote players' positions
+    this.remotePlayers = {}
+    this.handleEvent("player_moved", ({ id, x, y }) => {
+      // reject myself as a local player
+      if (id !== parseInt(this.el.dataset.playerId)) {
+        this.remotePlayers[id] = { x, y };
+      }
+    });
+
+
     // Read initial X from the data attribute instead of parsing calc()
     this.updatedX = parseFloat(this.el.dataset.posX) || 0;
     this.updatedY = 0;
@@ -35,6 +45,7 @@ const PlayerMovement = {
     // weapon setup (according to events sent)
     this.weaponActive = false;
     this.weaponX = null;
+    this.hasWeapon = false;
 
     this.handleEvent("weapon_spawned", ({ x }) => {
       this.weaponActive = true;
@@ -49,6 +60,7 @@ const PlayerMovement = {
     // show that I have the weapon
     this.handleEvent("local_player_has_weapon", () => {
       this.box.style.outline = "3px solid gold";
+      this.hasWeapon = true;
     });
 
     this.loop = setInterval(() => {
@@ -110,6 +122,22 @@ const PlayerMovement = {
         if (dx < (PLAYER_SIZE + WEAPON_SIZE) / 2 && dy < (PLAYER_SIZE + WEAPON_SIZE) / 2) {
           this.weaponActive = false; // prevent repeated firing
           this.pushEvent("pick_up_weapon", {});
+        }
+      }
+
+      // --- Touch other Players ---
+      if (this.hasWeapon) {
+        for (const [id, pos] of Object.entries(this.remotePlayers)) {
+          const dx = Math.abs(this.updatedX - pos.x);
+          const dy = Math.abs(this.updatedY - pos.y);
+          const PLAYER_SIZE = 48;
+
+          if (dx < PLAYER_SIZE && dy < PLAYER_SIZE) {
+            this.pushEvent("hit_player", { target_id: parseInt(id) });
+            this.box.style.outline = "";
+            this.hasWeapon = false;
+            break; // one hit per frame
+          }
         }
       }
     }, 16);

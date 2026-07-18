@@ -70,7 +70,7 @@ defmodule MoleViewWeb.MainLive do
 
   @impl true
   def handle_event("pick_up_weapon", _payload, socket) do
-    GameState.update_weapon(socket.assigns.local_player.id)
+    GameState.update_weapon(socket.assigns.local_player.id, true)
 
     # make weapons disappear for all players
     Phoenix.PubSub.broadcast(
@@ -89,7 +89,34 @@ defmodule MoleViewWeb.MainLive do
     {:noreply, socket}
   end
 
-  #
+  @impl true
+  def handle_event("hit_player", %{"target_id" => target_id}, socket) do
+    local_id = socket.assigns.local_player.id
+
+    # make weapon indicator disappear for other players
+    Phoenix.PubSub.broadcast(
+      MoleView.PubSub,
+      "game_room",
+      {:dont_show_player_weapon, local_id}
+    )
+
+    # update health bar and set has_weapon=false everywhere
+    Phoenix.PubSub.broadcast(
+      MoleView.PubSub,
+      "game_room",
+      {:update_health, target_id, local_id}
+    )
+
+    {:noreply, socket}
+  end
+
+  # send event to render has_weapon=false locally
+  @impl true
+  def handle_info({:dont_show_player_weapon, id}, socket) do
+    {:noreply, push_event(socket, "remote_player_doesnt_have_weapon", %{id: id})}
+  end
+
+  # send event to render has_weapon=true locally
   @impl true
   def handle_info({:show_player_weapon, id}, socket) do
     local_id = socket.assigns.local_player.id
@@ -130,6 +157,26 @@ defmodule MoleViewWeb.MainLive do
     Process.send_after(self(), :show_weapon, 5_000)
 
     {:noreply, socket}
+  end
+
+  @impl true
+  def handle_info({:update_health, target_id, attacker_id}, socket) do
+    local_id = socket.assigns.local_player.id
+
+    # update Genserver
+    GameState.update_health(target_id)
+    new_player_list = GameState.update_weapon(attacker_id, false)
+
+    # update local_player and remote_players for the leaderboard
+    [new_local_player] = Enum.filter(new_player_list, fn p -> p.id == local_id end)
+    new_remote_players = Enum.reject(new_player_list, fn p -> p.id == local_id end)
+
+    new_socket =
+      socket
+      |> assign(:local_player, new_local_player)
+      |> assign(:remote_players, new_remote_players)
+
+    {:noreply, new_socket}
   end
 
   # weapon rendering at each client (after broadcast)

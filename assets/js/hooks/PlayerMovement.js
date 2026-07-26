@@ -17,6 +17,12 @@ const PlayerMovement = {
       }
     });
 
+    // remove the dead player from the list
+    this.handleEvent("player_died", ({ id }) => {
+
+      delete this.remotePlayers[id]
+    })
+
 
     // Read initial X from the data attribute instead of parsing calc()
     this.updatedX = parseFloat(this.el.dataset.posX) || 0;

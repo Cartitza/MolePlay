@@ -10,6 +10,13 @@ const RemotePlayer = {
       }
     });
 
+    this.handleEvent("player_died", ({ id }) => {
+      const el = document.getElementById(`remote_player_${id}`);
+      if (el) {
+        el.remove()
+      }
+    })
+
     // showcase which player has the weapon
     this.handleEvent("remote_player_has_weapon", ({ id }) => {
       const el = document.getElementById(`remote_player_${id}`);

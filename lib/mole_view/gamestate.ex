@@ -27,9 +27,21 @@ defmodule MoleView.GameState do
     GenServer.call(__MODULE__, {:update_health, id})
   end
 
+  def remove_player(id) do
+    GenServer.call(__MODULE__, {:remove_player, id})
+  end
+
   # --- HANDLERS ---
   def init(init_gamestate) do
     {:ok, init_gamestate}
+  end
+
+  def handle_call({:remove_player, id}, _from, state) do
+    new_player_list = Enum.reject(state.player_list, fn p -> p.id == id end)
+
+    new_state = Map.put(state, :player_list, new_player_list)
+
+    {:reply, new_player_list, new_state}
   end
 
   def handle_call({:update_health, id}, _from, state) do

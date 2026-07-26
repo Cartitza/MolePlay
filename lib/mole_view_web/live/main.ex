@@ -11,10 +11,12 @@ defmodule MoleViewWeb.MainLive do
     # Subscribe to PubSub
     Phoenix.PubSub.subscribe(MoleView.PubSub, "game_room")
 
-    # TODO: Add weapon
-    # - field la playeri, la fiecare 5s cu send_after
-    # - trimis ca event cand un player intra in el (nush daca ca hook nou la arma sau PlayerMovement.js)
-    # - hooks render if it has weapon through push event directly in
+    # TODO: Fix possible bugs
+    # - no damage when the one with weapon doesnt move
+    # - possible problems when the first player leaves
+    # - not yet ready/dead handlers edge_cases
+    #
+    # Also: make the opposite of mount a thing
 
     new_socket =
       socket
@@ -52,6 +54,7 @@ defmodule MoleViewWeb.MainLive do
       socket
       |> assign(:is_ready, true)
       |> assign(:local_player, player)
+      |> assign(:is_dead, false)
 
     {:noreply, new_socket}
   end
@@ -160,7 +163,8 @@ defmodule MoleViewWeb.MainLive do
   end
 
   @impl true
-  def handle_info({:update_health, target_id, attacker_id}, socket) do
+  def handle_info({:update_health, target_id, attacker_id}, socket)
+      when socket.assigns.is_dead == false do
     local_id = socket.assigns.local_player.id
 
     # update Genserver
@@ -171,12 +175,50 @@ defmodule MoleViewWeb.MainLive do
     [new_local_player] = Enum.filter(new_player_list, fn p -> p.id == local_id end)
     new_remote_players = Enum.reject(new_player_list, fn p -> p.id == local_id end)
 
+    # remove rendering for the 'dead' player
+    if local_id == target_id && new_local_player.hp <= 0 do
+      Phoenix.PubSub.broadcast(
+        MoleView.PubSub,
+        "game_room",
+        {:remove_player, local_id}
+      )
+    end
+
     new_socket =
       socket
       |> assign(:local_player, new_local_player)
       |> assign(:remote_players, new_remote_players)
 
     {:noreply, new_socket}
+  end
+
+  @impl true
+  def handle_info({:update_health, _target_id, _attacker_id}, socket) do
+    {:noreply, socket}
+  end
+
+  # propagate the player removal
+  @impl true
+  def handle_info({:remove_player, id}, socket) do
+    local_id = socket.assigns.local_player.id
+
+    new_player_list = GameState.remove_player(id)
+
+    if local_id == id do
+      {:noreply, assign(socket, :is_dead, true)}
+    else
+      # update local_player and remote_players for the leaderboard
+      [new_local_player] = Enum.filter(new_player_list, fn p -> p.id == local_id end)
+      new_remote_players = Enum.reject(new_player_list, fn p -> p.id == local_id end)
+
+      new_socket =
+        socket
+        |> assign(:local_player, new_local_player)
+        |> assign(:remote_players, new_remote_players)
+        |> push_event("player_died", %{id: id})
+
+      {:noreply, new_socket}
+    end
   end
 
   # weapon rendering at each client (after broadcast)

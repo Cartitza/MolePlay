@@ -29,6 +29,23 @@ defmodule MoleViewWeb.MainLive do
     {:ok, new_socket}
   end
 
+  # player exits
+  @impl true
+  def terminate(_reason, socket) do
+    if socket.assigns.is_ready == true do
+      # send signal to derender the player
+      local_id = socket.assigns.local_player.id
+
+      Phoenix.PubSub.broadcast(
+        MoleView.PubSub,
+        "game_room",
+        {:remove_player, local_id}
+      )
+    end
+
+    :ok
+  end
+
   @impl true
   def handle_event("join_game", %{"player_name" => name, "player_colour" => colour}, socket) do
     # Build the local player and mark as ready
@@ -199,7 +216,7 @@ defmodule MoleViewWeb.MainLive do
 
   # propagate the player removal
   @impl true
-  def handle_info({:remove_player, id}, socket) do
+  def handle_info({:remove_player, id}, socket) when socket.assigns.is_ready == true do
     local_id = socket.assigns.local_player.id
 
     new_player_list = GameState.remove_player(id)
@@ -219,6 +236,11 @@ defmodule MoleViewWeb.MainLive do
 
       {:noreply, new_socket}
     end
+  end
+
+  @impl true
+  def handle_info({:remove_player, _id}, socket) do
+    {:noreply, socket}
   end
 
   # weapon rendering at each client (after broadcast)

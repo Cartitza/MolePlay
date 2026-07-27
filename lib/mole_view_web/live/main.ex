@@ -12,11 +12,7 @@ defmodule MoleViewWeb.MainLive do
     Phoenix.PubSub.subscribe(MoleView.PubSub, "game_room")
 
     # TODO: Fix possible bugs
-    # - no damage when the one with weapon doesnt move
-    # - possible problems when the first player leaves
-    # - not yet ready/dead handlers edge_cases
-    #
-    # Also: make the opposite of mount a thing
+    # - issues with movement
 
     new_socket =
       socket
@@ -63,9 +59,9 @@ defmodule MoleViewWeb.MainLive do
     end
 
     # send_after cu update la arma
-    if length(GameState.get_player_list()) == 1 do
-      Process.send_after(self(), :show_weapon, 5_000)
-    end
+    # if length(GameState.get_player_list()) == 1 do
+    #   Process.send_after(self(), :show_weapon, 5_000)
+    # end
 
     new_socket =
       socket
@@ -216,7 +212,8 @@ defmodule MoleViewWeb.MainLive do
 
   # propagate the player removal
   @impl true
-  def handle_info({:remove_player, id}, socket) when socket.assigns.is_ready == true do
+  def handle_info({:remove_player, id}, socket)
+      when socket.assigns.is_ready == true and socket.assigns.is_dead == false do
     local_id = socket.assigns.local_player.id
 
     new_player_list = GameState.remove_player(id)

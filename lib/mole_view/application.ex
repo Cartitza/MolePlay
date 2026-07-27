@@ -16,7 +16,8 @@ defmodule MoleView.Application do
       # {MoleView.Worker, arg},
       # Start to serve requests, typically the last entry
       MoleViewWeb.Endpoint,
-      MoleView.GameState
+      MoleView.GameState,
+      MoleView.WeaponSpawner
     ]
 
     # See https://elixir.hexdocs.pm/Supervisor.html

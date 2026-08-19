@@ -145,37 +145,6 @@ defmodule MoleViewWeb.MainLive do
   end
 
   @impl true
-  def handle_info(:show_weapon, socket) do
-    # make weapon appear at every player
-    weapon_x = Enum.random(-400..400)
-
-    Phoenix.PubSub.broadcast(
-      MoleView.PubSub,
-      "game_room",
-      {:render_weapon, weapon_x}
-    )
-
-    # make weapon disappear after 3s
-    Process.send_after(self(), :hide_weapon, 3_000)
-
-    {:noreply, socket}
-  end
-
-  @impl true
-  def handle_info(:hide_weapon, socket) do
-    Phoenix.PubSub.broadcast(
-      MoleView.PubSub,
-      "game_room",
-      :dont_render_weapon
-    )
-
-    # make it reappear after another 5s
-    Process.send_after(self(), :show_weapon, 5_000)
-
-    {:noreply, socket}
-  end
-
-  @impl true
   def handle_info({:update_health, target_id, attacker_id}, socket)
       when socket.assigns.is_dead == false do
     local_id = socket.assigns.local_player.id

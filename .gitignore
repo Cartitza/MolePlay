@@ -35,3 +35,5 @@ mole_view-*.tar
 npm-debug.log
 /assets/node_modules/
 
+# secret inside
+docker-compose.yml

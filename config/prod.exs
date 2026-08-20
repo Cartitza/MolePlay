@@ -15,7 +15,7 @@ config :mole_view, MoleViewWeb.Endpoint,
     rewrite_on: [:x_forwarded_proto],
     exclude: [
       # paths: ["/health"],
-      hosts: ["localhost", "127.0.0.1"]
+      hosts: ["100.106.161.12", "localhost", "127.0.0.1"]
     ]
   ]
 

@@ -1,0 +1,9 @@
+services:
+  mole_play:
+    build: .
+    container_name: mole_play1
+    ports:
+      - "4096:4000"
+    environment:
+      SECRET_KEY_BASE: "very_secret_key"
+      PHX_HOST: "play.andreicartitza.me"

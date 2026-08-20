@@ -32,6 +32,8 @@ defmodule MoleViewWeb.MainLive do
       # send signal to derender the player
       local_id = socket.assigns.local_player.id
 
+      GameState.remove_player(local_id)
+
       Phoenix.PubSub.broadcast(
         MoleView.PubSub,
         "game_room",

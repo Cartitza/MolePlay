@@ -9,6 +9,7 @@ defmodule MoleView.Application do
   def start(_type, _args) do
     children = [
       MoleViewWeb.Telemetry,
+      MoleViewWeb.PromEx,
       # MoleView.Repo,
       {DNSCluster, query: Application.get_env(:mole_view, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: MoleView.PubSub},

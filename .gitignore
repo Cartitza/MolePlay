@@ -34,3 +34,11 @@ mole_view-*.tar
 # In case you use Node.js/npm, you want to ignore these.
 npm-debug.log
 /assets/node_modules/
+
+# terraform
+/terraform/nb-key-pair.pem
+/terraform/terraform.tfstate*
+/terraform/.terraform/
+
+# idk what it is
+.DS_Store

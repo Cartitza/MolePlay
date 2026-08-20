@@ -21,6 +21,10 @@ defmodule MoleViewWeb.Router do
     live("/", MainLive)
   end
 
+  scope "/" do
+    forward "/metrics", PromEx.Plug, prom_ex_module: MoleViewWeb.PromEx
+  end
+
   # Other scopes may use custom stacks.
   # scope "/api", MoleViewWeb do
   #   pipe_through :api

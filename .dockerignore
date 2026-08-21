@@ -47,3 +47,6 @@ erl_crash.dump
 
 # IaC folder
 /terraform/
+
+# github actions
+.github/

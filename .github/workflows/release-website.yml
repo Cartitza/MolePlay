@@ -23,19 +23,15 @@ jobs:
           tags: tag:cd
           ephemeral: true
 
-      - name: Set up SSH key
-        uses: webfactory/ssh-agent@v0.9.1
-        with:
-          ssh-private-key: ${{ secrets.EC2_PRIVATE_KEY }}
-
-      - name: Add server to known_hosts
+      - name: Copy SSH key
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_KNOWN_HOSTS }}" >> ~/.ssh/known_hosts
+              echo "${{ secrets.PI_PUBLIC_KEY }}" > ~/.ssh/id_ed25519
+              chmod 600 ~/.ssh/id_ed25519
 
       - name: Deploy
         run: |
-          ssh -o StrictHostKeyChecking=yes ubuntu@ip-172-31-24-101.tail779427.ts.net <<'EOF'
+          ssh -o StrictHostKeyChecking=no ubuntu@100.106.161.12 <<'EOF'
           set -euo pipefail
           echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
           cd ~/deploy

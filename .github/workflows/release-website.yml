@@ -1,0 +1,45 @@
+name: Release website to production
+
+on:
+  release:
+      types: [published]
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Tailscale Connection
+        uses: tailscale/github-action@v4
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_CLIENT_SECRET }}
+          tags: tag:cd
+          ephemeral: true
+
+      - name: Set up SSH key
+        uses: webfactory/ssh-agent@v0.9.1
+        with:
+          ssh-private-key: ${{ secrets.EC2_PRIVATE_KEY }}
+
+      - name: Add server to known_hosts
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_KNOWN_HOSTS }}" >> ~/.ssh/known_hosts
+
+      - name: Deploy
+        run: |
+          ssh -o StrictHostKeyChecking=yes ubuntu@ip-172-31-24-101.tail779427.ts.net <<'EOF'
+          set -euo pipefail
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          cd ~/deploy
+          docker compose pull
+          docker compose up -d --remove-orphans
+          docker image prune -f
+          EOF

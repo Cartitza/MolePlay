@@ -1,0 +1,41 @@
+name: Release website to production
+
+on:
+  release:
+      types: [published]
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Tailscale Connection
+        uses: tailscale/github-action@v4
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_CLIENT_SECRET }}
+          tags: tag:cd
+          ephemeral: true
+
+      - name: Copy SSH key
+        run: |
+          mkdir -p ~/.ssh
+              echo "${{ secrets.EC2_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+              chmod 600 ~/.ssh/id_ed25519
+
+      - name: Deploy
+        run: |
+          ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no ubuntu@100.106.161.12 <<'EOF'
+          set -euo pipefail
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          cd ~/deploy
+          docker compose pull
+          docker compose up -d --remove-orphans
+          docker image prune -f
+          EOF

@@ -31,7 +31,7 @@ jobs:
 
       - name: Deploy
         run: |
-          ssh -o StrictHostKeyChecking=no ubuntu@100.106.161.12 <<'EOF'
+          ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no ubuntu@100.106.161.12 <<'EOF'
           set -euo pipefail
           echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
           cd ~/deploy

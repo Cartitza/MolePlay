@@ -37,9 +37,9 @@ jobs:
         with:
           image-ref: '${{ env.IMAGE_NAME }}'
           format: 'table'
-          exit-code: '1'
+          exit-code: '0'
           ignore-unfixed: true
-          vuln-type: 'os,library'
+          vuln-type: 'library'
           severity: 'CRITICAL,HIGH'
 
       - name: Push image

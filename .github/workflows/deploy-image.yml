@@ -1,5 +1,6 @@
 #
 name: Create and publish a Docker image
+run-name: Create and push Docker image:latest to Packages
 
 # This workflow runs when any of the following occur:
 # - A push is made to a branch called `main` or `seed`
@@ -14,7 +15,7 @@ env:
 #
 jobs:
   # This pushes the image to GitHub Packages.
-  push:
+  Create-Check-Push:
     runs-on: ubuntu-latest
     permissions:
       packages: write
@@ -34,7 +35,7 @@ jobs:
         with:
           image-ref: '${{ env.IMAGE_NAME }}'
           format: 'table'
-          exit-code: '0'
+          exit-code: '1'
           ignore-unfixed: true
           vuln-type: 'library'
           severity: 'CRITICAL,HIGH'

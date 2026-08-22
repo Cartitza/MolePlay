@@ -1,4 +1,5 @@
 name: Release website to production
+run-name: Publish website
 
 on:
   release:
@@ -9,7 +10,7 @@ permissions:
   packages: read
 
 jobs:
-  deploy:
+  Deploy-to-Production:
     runs-on: ubuntu-latest
 
     steps:

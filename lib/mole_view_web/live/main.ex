@@ -11,8 +11,12 @@ defmodule MoleViewWeb.MainLive do
     # Subscribe to PubSub
     Phoenix.PubSub.subscribe(MoleView.PubSub, "game_room")
 
-    # TODO: Fix possible bugs
-    # - issues with movement
+    # TODO: Fix possible bugs:
+    # - weird behaviour for not yet ready players
+    # - arena size bug (low priority)
+    #
+    # - add heart as consumable
+    # - UI overhaul
 
     new_socket =
       socket
@@ -46,12 +50,17 @@ defmodule MoleViewWeb.MainLive do
 
   @impl true
   def handle_event("join_game", %{"player_name" => name, "player_colour" => colour}, socket) do
+    # Get a list of remote player IDs
+    remote_player_ids =
+      GameState.get_player_list()
+      |> Enum.map(fn p -> p.id end)
+
     # Build the local player and mark as ready
     player = %Player{
       name: name,
       colour: colour,
       posX: Enum.random(-400..400),
-      id: Enum.random(1..99999)
+      id: random_unused_id(remote_player_ids)
     }
 
     # broadcast 'new_player'
@@ -72,6 +81,12 @@ defmodule MoleViewWeb.MainLive do
       |> assign(:is_dead, false)
 
     {:noreply, new_socket}
+  end
+
+  # when you press join but didnt select anything
+  @impl true
+  def handle_event("join_game", _, socket) do
+    {:noreply, socket}
   end
 
   @impl true
@@ -108,21 +123,19 @@ defmodule MoleViewWeb.MainLive do
   end
 
   @impl true
-  def handle_event("hit_player", %{"target_id" => target_id}, socket) do
-    local_id = socket.assigns.local_player.id
-
+  def handle_event("hit_player", %{"target_id" => target_id, "attacker_id" => attacker_id}, socket) do
     # make weapon indicator disappear for other players
     Phoenix.PubSub.broadcast(
       MoleView.PubSub,
       "game_room",
-      {:dont_show_player_weapon, local_id}
+      {:dont_show_player_weapon, attacker_id}
     )
 
     # update health bar and set has_weapon=false everywhere
     Phoenix.PubSub.broadcast(
       MoleView.PubSub,
       "game_room",
-      {:update_health, target_id, local_id}
+      {:update_health, target_id, attacker_id}
     )
 
     {:noreply, socket}
@@ -250,8 +263,7 @@ defmodule MoleViewWeb.MainLive do
     weapon_holders = Enum.filter(GameState.get_player_list(), fn p -> p.has_weapon end)
 
     new_socket =
-      Enum.reduce(weapon_holders, assign(socket, :remote_players, remote_player_list), fn holder,
-                                                                                          s ->
+      Enum.reduce(weapon_holders, assign(socket, :remote_players, remote_player_list), fn holder, s ->
         if holder.id == local_id do
           push_event(s, "local_player_has_weapon", %{})
         else
@@ -259,7 +271,8 @@ defmodule MoleViewWeb.MainLive do
         end
       end)
 
-    {:noreply, new_socket}
+    # push event so that I am not intangible until I move
+    {:noreply, push_event(new_socket, "player_moved", %{id: player.id, x: player.posX, y: player.posY})}
   end
 
   def handle_info({:new_player, _player}, socket) do
@@ -277,5 +290,11 @@ defmodule MoleViewWeb.MainLive do
 
   def handle_info({:position_update, _id, _new_x, _new_y}, socket) do
     {:noreply, socket}
+  end
+
+  # get an unused id for any new player
+  defp random_unused_id(taken_ids) do
+    id = Enum.random(1..99999)
+    if id in taken_ids, do: random_unused_id(taken_ids), else: id
   end
 end

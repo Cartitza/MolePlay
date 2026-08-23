@@ -7,15 +7,34 @@ const PlayerMovement = {
                       || this.el.parentElement.parentElement;
 
     this.keys = {};
+    this.local_id = parseInt(this.el.dataset.playerId);
 
     // build the list of remote players' positions
     this.remotePlayers = {}
+    this.remoteWeapons = []
     this.handleEvent("player_moved", ({ id, x, y }) => {
       // reject myself as a local player
-      if (id !== parseInt(this.el.dataset.playerId)) {
+      if (id !== this.local_id) {
         this.remotePlayers[id] = { x, y };
       }
     });
+
+    // save which player has weapon or not
+    this.handleEvent("remote_player_has_weapon", ({ id }) => {
+      if (id !== this.local_id) {
+        this.remoteWeapons.push(id);
+      }
+    });
+
+    this.handleEvent("remote_player_doesnt_have_weapon", ({ id }) => {
+      if (id !== this.local_id) {
+        this.remoteWeapons = this.remoteWeapons.filter((i) => i !== id);
+      } else {
+        this.box.style.outline = "";
+        this.hasWeapon = false;
+      }
+    });
+
 
     // remove the dead player from the list
     this.handleEvent("player_died", ({ id }) => {
@@ -131,7 +150,7 @@ const PlayerMovement = {
         }
       }
 
-      // --- Touch other Players ---
+      // --- Touch other Players when you have weapon ---
       if (this.hasWeapon) {
         for (const [id, pos] of Object.entries(this.remotePlayers)) {
           const dx = Math.abs(this.updatedX - pos.x);
@@ -139,9 +158,24 @@ const PlayerMovement = {
           const PLAYER_SIZE = 48;
 
           if (dx < PLAYER_SIZE && dy < PLAYER_SIZE) {
-            this.pushEvent("hit_player", { target_id: parseInt(id) });
+            this.pushEvent("hit_player", { target_id: parseInt(id), attacker_id: this.local_id });
             this.box.style.outline = "";
             this.hasWeapon = false;
+            break; // one hit per frame
+          }
+        }
+      }
+
+      // --- Touch other Players that have weapon ---
+      for (const [id, pos] of Object.entries(this.remotePlayers)) {
+        if (this.remoteWeapons.includes(parseInt(id))) {
+          const dx = Math.abs(this.updatedX - pos.x);
+          const dy = Math.abs(this.updatedY - pos.y);
+          const PLAYER_SIZE = 48;
+
+          if (dx < PLAYER_SIZE && dy < PLAYER_SIZE) {
+            this.pushEvent("hit_player", { target_id: this.local_id, attacker_id: parseInt(id) });
+            this.remoteWeapons = this.remoteWeapons.filter((i) => i !== id);
             break; // one hit per frame
           }
         }
